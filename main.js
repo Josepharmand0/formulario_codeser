@@ -1,50 +1,70 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Establece fecha y hora actual al cargar
-  document.getElementById("fecha").value = new Date().toLocaleString();
+  // Establece la fecha y hora automática en formato colombiano
+  document.getElementById("fecha").value = new Date().toLocaleString("es-CO", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 
-  // Configuración del canvas de firma
   const canvas = document.getElementById("firma");
   const ctx = canvas.getContext("2d");
   let pintando = false;
 
-  function iniciarFirma(e) {
-    pintando = true;
-    dibujar(e);
-  }
-
-  function terminarFirma() {
-    pintando = false;
-    ctx.beginPath();
-  }
-
-  function dibujar(e) {
-    if (!pintando) return;
+  function getPosicion(evento) {
     const rect = canvas.getBoundingClientRect();
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "#000";
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    const x = (evento.clientX || evento.touches[0].clientX) - rect.left;
+    const y = (evento.clientY || evento.touches[0].clientY) - rect.top;
+    return { x, y };
   }
 
-  // Soporte táctil
-  canvas.addEventListener("mousedown", iniciarFirma);
-  canvas.addEventListener("mouseup", terminarFirma);
-  canvas.addEventListener("mouseout", terminarFirma);
-  canvas.addEventListener("mousemove", dibujar);
+  canvas.addEventListener("mousedown", (e) => {
+    pintando = true;
+    const { x, y } = getPosicion(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  });
 
-  canvas.addEventListener("touchstart", (e) => iniciarFirma(e.touches[0]));
-  canvas.addEventListener("touchend", terminarFirma);
-  canvas.addEventListener("touchmove", (e) => {
-    dibujar(e.touches[0]);
+  canvas.addEventListener("mouseup", () => {
+    pintando = false;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!pintando) return;
+    const { x, y } = getPosicion(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  });
+
+  canvas.addEventListener("touchstart", (e) => {
+    pintando = true;
+    const { x, y } = getPosicion(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
     e.preventDefault();
+  });
+
+  canvas.addEventListener("touchmove", (e) => {
+    if (!pintando) return;
+    const { x, y } = getPosicion(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    e.preventDefault();
+  });
+
+  canvas.addEventListener("touchend", () => {
+    pintando = false;
   });
 
   function borrarFirma() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
+
+  // Hacemos la función visible globalmente para el botón
+  window.borrarFirma = borrarFirma;
 
   // Evento de envío del formulario
   document.getElementById("formulario").addEventListener("submit", function (e) {
@@ -63,18 +83,15 @@ document.addEventListener("DOMContentLoaded", function () {
       method: "POST",
       body: formData
     })
-      .then(res => res.text())
-      .then(resp => {
-        alert("✅ ¡Formulario enviado correctamente!");
-        document.getElementById("formulario").reset();
-        borrarFirma();
-      })
-      .catch(err => {
-        alert("❌ Error al enviar el formulario.");
-        console.error("Error:", err);
-      });
+    .then(res => res.text())
+    .then(resp => {
+      alert("✅ ¡Formulario enviado correctamente!");
+      document.getElementById("formulario").reset();
+      borrarFirma();
+    })
+    .catch(err => {
+      alert("❌ Error al enviar el formulario.");
+      console.error("Error:", err);
+    });
   });
-
-  // Hacemos accesible borrarFirma globalmente
-  window.borrarFirma = borrarFirma;
 });

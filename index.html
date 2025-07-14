@@ -11,6 +11,7 @@
     canvas {
       border: 2px solid #444;
       cursor: crosshair;
+      touch-action: none; /* Evita scroll mientras se firma en móviles */
     }
     .form-group {
       margin-bottom: 15px;
@@ -28,41 +29,34 @@
 
   <h2>Confirmación de Lectura y Firma</h2>
 
-  <!-- FORMULARIO -->
   <form id="formulario">
-    <!-- Nombre -->
     <div class="form-group">
       <label for="nombre">Nombre completo:</label><br>
       <input type="text" id="nombre" name="nombre" required>
     </div>
 
-    <!-- Cédula -->
     <div class="form-group">
       <label for="cedula">Cédula:</label><br>
       <input type="text" id="cedula" name="cedula" required>
     </div>
 
-    <!-- Fecha automática -->
     <div class="form-group">
       <label for="fecha">Fecha y hora:</label><br>
       <input type="text" id="fecha" name="fecha" readonly>
     </div>
 
-    <!-- Firma -->
     <div class="form-group">
-      <label>Firma (use el mouse o el dedo):</label><br>
+      <label>Firma (use el mouse o el dedo en el celular):</label><br>
       <canvas id="firma" width="300" height="100"></canvas><br>
       <button type="button" onclick="borrarFirma()">Borrar Firma</button>
     </div>
 
-    <!-- Firma en base64 (oculta) -->
     <input type="hidden" id="imagenFirma" name="imagenFirma">
 
-    <!-- Botón de envío -->
     <button type="submit">Enviar</button>
   </form>
 
-  <!-- Cargar JS al final -->
+  <!-- Carga el script JavaScript al final -->
   <script src="main.js"></script>
 </body>
 </html>
