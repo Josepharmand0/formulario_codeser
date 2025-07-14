@@ -24,6 +24,7 @@
     }
   </style>
 </head>
+<script src="main.js"></script>
 <body>
 
   <h2>Confirmación de Lectura y Firma</h2>
@@ -42,48 +43,45 @@
       <input type="text" id="cedula" name="cedula" required>
     </div>
 
-    <!-- Fecha y hora (automática) -->
+    <!-- Fecha automática -->
     <div class="form-group">
       <label for="fecha">Fecha y hora:</label><br>
       <input type="text" id="fecha" name="fecha" readonly>
     </div>
 
-    <!-- Firma en canvas -->
+    <!-- Firma -->
     <div class="form-group">
       <label>Firma (use el mouse o el dedo):</label><br>
       <canvas id="firma" width="300" height="100"></canvas><br>
       <button type="button" onclick="borrarFirma()">Borrar Firma</button>
     </div>
 
-    <!-- Campo oculto para guardar la imagen de la firma -->
+    <!-- Firma en base64 (oculta) -->
     <input type="hidden" id="imagenFirma" name="imagenFirma">
 
-    <!-- Botón de enviar -->
+    <!-- Botón de envío -->
     <button type="submit">Enviar</button>
   </form>
 
   <script>
-    // Establecer fecha y hora actual al cargar
+    // Establece fecha y hora actual
     document.getElementById("fecha").value = new Date().toLocaleString();
 
-    // Variables para el canvas de firma
+    // Configuración del canvas de firma
     const canvas = document.getElementById("firma");
     const ctx = canvas.getContext("2d");
     let pintando = false;
 
-    // Inicia el trazo
     function iniciarFirma(e) {
       pintando = true;
       dibujar(e);
     }
 
-    // Termina el trazo
     function terminarFirma() {
       pintando = false;
       ctx.beginPath();
     }
 
-    // Dibuja mientras se mueve el puntero
     function dibujar(e) {
       if (!pintando) return;
       const rect = canvas.getBoundingClientRect();
@@ -96,13 +94,12 @@
       ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
     }
 
-    // Eventos de mouse
+    // Soporte para dispositivos táctiles
     canvas.addEventListener("mousedown", iniciarFirma);
     canvas.addEventListener("mouseup", terminarFirma);
     canvas.addEventListener("mouseout", terminarFirma);
     canvas.addEventListener("mousemove", dibujar);
 
-    // Eventos táctiles para celulares
     canvas.addEventListener("touchstart", (e) => iniciarFirma(e.touches[0]));
     canvas.addEventListener("touchend", terminarFirma);
     canvas.addEventListener("touchmove", (e) => {
@@ -110,40 +107,35 @@
       e.preventDefault();
     });
 
-    // Limpia el canvas
     function borrarFirma() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Evento al enviar el formulario
+    // Enviar formulario usando FormData (sin JSON)
     document.getElementById("formulario").addEventListener("submit", function(e) {
-      e.preventDefault(); // Evita el envío tradicional
+      e.preventDefault();
 
-      // Convierte el contenido del canvas en imagen base64
+      // Convertir firma en imagen base64
       const dataURL = canvas.toDataURL();
       document.getElementById("imagenFirma").value = dataURL;
 
-      // Prepara los datos a enviar
-      const datos = {
-        nombre: document.getElementById("nombre").value,
-        cedula: document.getElementById("cedula").value,
-        fecha: document.getElementById("fecha").value,
-        firma: dataURL
-      };
+      // Crear objeto FormData
+      const formData = new FormData();
+      formData.append("nombre", document.getElementById("nombre").value);
+      formData.append("cedula", document.getElementById("cedula").value);
+      formData.append("fecha", document.getElementById("fecha").value);
+      formData.append("firma", dataURL);
 
-      // ENVÍO A GOOGLE SHEETS (USA TU URL DE GOOGLE SCRIPT AQUÍ)
+      // Enviar a Google Apps Script
       fetch("https://script.google.com/macros/s/AKfycbxM2XQZgd1Si8ToUQBNZYg8jHzj4CQGbzJvcgmloBIzvYg_4n3w9rv73dGfkw9rE8M/exec", {
         method: "POST",
-        body: JSON.stringify(datos),
-        headers: {
-          "Content-Type": "application/json"
-        }
+        body: formData
       })
       .then(res => res.text())
       .then(resp => {
         alert("✅ ¡Formulario enviado correctamente!");
-        document.getElementById("formulario").reset(); // limpia los campos
-        borrarFirma(); // limpia el canvas
+        document.getElementById("formulario").reset();
+        borrarFirma();
       })
       .catch(err => {
         alert("❌ Error al enviar el formulario.");
