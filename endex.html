@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario con Firma</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    canvas {
+      border: 2px solid #444;
+      cursor: crosshair;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+    }
+    button {
+      padding: 10px 15px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Confirmación de Lectura y Firma</h2>
+  <form id="formulario">
+    <div class="form-group">
+      <label for="nombre">Nombre completo:</label><br>
+      <input type="text" id="nombre" name="nombre" required>
+    </div>
+
+    <div class="form-group">
+      <label for="cedula">Cédula:</label><br>
+      <input type="text" id="cedula" name="cedula" required>
+    </div>
+
+    <div class="form-group">
+      <label for="fecha">Fecha y hora:</label><br>
+      <input type="text" id="fecha" name="fecha" readonly>
+    </div>
+
+    <div class="form-group">
+      <label>Firma (use el mouse o el dedo en el celular):</label><br>
+      <canvas id="firma" width="300" height="100"></canvas><br>
+      <button type="button" onclick="borrarFirma()">Borrar Firma</button>
+    </div>
+
+    <input type="hidden" id="imagenFirma" name="imagenFirma">
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script>
+    // Configurar fecha y hora automática
+    document.getElementById("fecha").value = new Date().toLocaleString();
+
+    // Lógica para dibujar en el canvas
+    const canvas = document.getElementById("firma");
+    const ctx = canvas.getContext("2d");
+    let pintando = false;
+
+    function iniciarFirma(e) {
+      pintando = true;
+      dibujar(e);
+    }
+
+    function terminarFirma() {
+      pintando = false;
+      ctx.beginPath();
+    }
+
+    function dibujar(e) {
+      if (!pintando) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#000";
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    canvas.addEventListener("mousedown", iniciarFirma);
+    canvas.addEventListener("mouseup", terminarFirma);
+    canvas.addEventListener("mouseout", terminarFirma);
+    canvas.addEventListener("mousemove", dibujar);
+
+    canvas.addEventListener("touchstart", (e) => iniciarFirma(e.touches[0]));
+    canvas.addEventListener("touchend", terminarFirma);
+    canvas.addEventListener("touchmove", (e) => {
+      dibujar(e.touches[0]);
+      e.preventDefault();
+    });
+
+    // Borrar firma
+    function borrarFirma() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Envío del formulario
+    document.getElementById("formulario").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const dataURL = canvas.toDataURL();
+      document.getElementById("imagenFirma").value = dataURL;
+
+      const datos = {
+        nombre: document.getElementById("nombre").value,
+        cedula: document.getElementById("cedula").value,
+        fecha: document.getElementById("fecha").value,
+        firma: dataURL
+      };
+
+      console.log("Datos del formulario:", datos);
+
+      alert("¡Formulario enviado! (simulado en consola)");
+      // Aquí puedes enviar `datos` a un servidor, una hoja de cálculo, etc.
+    });
+  </script>
+
+</body>
+</html>
